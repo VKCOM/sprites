@@ -1,0 +1,10 @@
+{
+  "name": "svg-icons",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "fs-extra": "^7.0.1",
+    "svg-sprite": "^1.5.0"
+  }
+}
