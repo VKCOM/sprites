@@ -1,5 +1,7 @@
 const path = require("path");
+
 const generate = require("../src");
+const InkscapeConverter = require("../src/convert/InkscapeConverter");
 
 (async () => {
   console.time("Generating sprites");
@@ -17,9 +19,9 @@ const generate = require("../src");
       svgPath,
       cssPath
     },
+    new InkscapeConverter([2], "/opt/local/bin/inkscape"),
     {
-      need2x: true,
-      cssPrefix: "vk"
+      cssPrefix: "VK-"
     }
   );
 

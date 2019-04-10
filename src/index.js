@@ -4,6 +4,8 @@ const fsExtra = require("fs-extra");
 const { extname, join, relative } = require("path");
 const { promisify } = require("util");
 
+const BaseConverter = require("./convert/BaseConverter");
+
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 const mkdir = promisify(fs.mkdir);
@@ -18,10 +20,11 @@ const flushDir = promisify(fsExtra.emptyDir);
  * @param {string} output.pngPath Path to folder where PNG sprites will be saved
  * @param {string} output.svgPath Path to folder where SVG sprites will be saved
  * @param {string} output.cssPath Path to folder where stylesheets will be saved
+ * @param {BaseConverter} converter SVG to PNG converter
  * @param {Object} options
- * @param {boolean} [options.need2x = false] Is need to generate 2x version of PNG
+ * @param {string} options.cssPrefix Prefix in stylesheet name
  */
-async function generate(path, output = {}, options = {}) {
+async function generate(path, output = {}, converter, options) {
   const { pngPath, svgPath, cssPath } = output;
 
   await checkDir(path);
@@ -86,8 +89,19 @@ async function generate(path, output = {}, options = {}) {
 
     svgSprites.push({ css, svg });
   }
+
+  if (converter) {
+    for await (sprite of svgSprites) {
+      const png = await converter.process(sprite.svg);
+    }
+  }
 }
 
+/**
+ * Recursively find SVG and sprite that him belong
+ *
+ * @param {string} path Entrypoint with SVG icons
+ */
 function findSprites(path) {
   const found = [];
 
