@@ -47,6 +47,11 @@ async function generate(path, output = {}, converter, options) {
       },
       spacing: {
         padding: 2
+      },
+      id: {
+        generator: function(name, file) {
+          return file.stem;
+        }
       }
     },
     svg: {
