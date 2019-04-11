@@ -16,20 +16,23 @@ class InkscapeConverter extends BaseConverter {
 
     const result = {};
 
-    for await (let scale of this.scales) {
-      const svgName = basename(svgPath);
+    await Promise.all(
+      this.scales.map(async scale => {
+        const svgName = basename(svgPath);
 
-      const pngPath = join(
-        this.output,
-        svgName.substr(0, svgName.lastIndexOf(".")) + `_${scale}x.png`
-      );
+        const pngPath = join(
+          this.output,
+          svgName.substr(0, svgName.lastIndexOf(".")) + `_${scale}x.png`
+        );
 
-      await exec(
-        `${this.binary} ${svgPath} -e ${pngPath} -d=${scale * 92} --without-gui`
-      );
+        await exec(
+          `${this.binary} ${svgPath} -e ${pngPath} -d=${scale *
+            92} --without-gui`
+        );
 
-      result[scale] = pngPath;
-    }
+        result[scale] = pngPath;
+      })
+    );
 
     return result;
   }

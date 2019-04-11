@@ -71,81 +71,95 @@ async function generate(path, output = {}, converter, options) {
   const sprites = await findSprites(path, path);
 
   const svgSprites = [];
-  for await (sprite of Object.keys(sprites)) {
-    const config = {
-      ...baseConfig,
-      mode: {
-        css: {
-          ...baseConfig.mode.css,
-          sprite: `${sprite || "sprite"}.svg`,
-          prefix: `.svgIcon-${sprite}__%s`,
-          common: `svgIcon .svgIcon-${sprite}`,
-          render: {
-            less: {
-              dest: join(cssPath, `${options.cssPrefix}${sprite}`) + ".less"
+  await Promise.all(
+    Object.keys(sprites).map(async sprite => {
+      const config = {
+        ...baseConfig,
+        mode: {
+          css: {
+            ...baseConfig.mode.css,
+            sprite: `${sprite || "sprite"}.svg`,
+            prefix: `.svgIcon-${sprite}__%s`,
+            common: `svgIcon .svgIcon-${sprite}`,
+            render: {
+              less: {
+                dest: join(cssPath, `${options.cssPrefix}${sprite}`) + ".less"
+              }
             }
           }
         }
+      };
+
+      const spriter = new SVGSpriter(config);
+
+      await Promise.all(
+        sprites[sprite].map(async image => {
+          const file = await readFile(image);
+          spriter.add(image, null, file);
+        })
+      );
+
+      const compile = promisify(spriter.compile).bind(spriter);
+      const res = await compile();
+
+      const css = join(cssPath, res.css.less.basename);
+      const svg = join(svgPath, res.css.sprite.basename);
+
+      await writeFile(css, res.css.less.contents.toString());
+      await writeFile(svg, res.css.sprite.contents.toString());
+
+      svgSprites.push({ css, svg, name: sprite });
+
+      if (converter) {
+        await convert(converter, svgSprites, options);
       }
-    };
-
-    const spriter = new SVGSpriter(config);
-    for await (image of sprites[sprite]) {
-      const file = await readFile(image);
-      spriter.add(image, null, file);
-    }
-
-    const compile = promisify(spriter.compile).bind(spriter);
-    const res = await compile();
-
-    const css = join(cssPath, res.css.less.basename);
-    const svg = join(svgPath, res.css.sprite.basename);
-
-    await writeFile(css, res.css.less.contents.toString());
-    await writeFile(svg, res.css.sprite.contents.toString());
-
-    svgSprites.push({ css, svg, name: sprite });
-  }
-
-  if (converter) {
-    await convert(converter, svgSprites, options);
-  }
+    })
+  );
 }
 
 async function convert(converter, svgSprites, options) {
-  for await (sprite of svgSprites) {
-    const css = await readFile(sprite.css);
-    const root = postcss.parse(css.toString());
+  await Promise.all(
+    svgSprites.map(async sprite => {
+      const css = await readFile(sprite.css);
+      const root = postcss.parse(css.toString());
 
-    const png = await converter.process(sprite.svg);
-    const svgFile = await readFile(sprite.svg);
-    const width = imageSize(svgFile).width;
+      const png = await converter.process(sprite.svg);
+      const svgFile = await readFile(sprite.svg);
+      const width = imageSize(svgFile).width;
 
-    const absoluteSVGPath = join(options.svgDest, basename(sprite.svg));
+      const absoluteSVGPath = join(options.svgDest, basename(sprite.svg));
 
-    // Change SVG path to destination and add fallback
-    root.walkDecls("background", async rule => {
-      rule.value = `url(${absoluteSVGPath}) ${width}px`;
-
-      for await (let scale of Object.keys(png)) {
-        const absolutePNGPath = join(options.pngDest, basename(png[scale]));
-
-        let scaleClass = `,.${options.pngClassPrefix}${scale}x`;
-        if (scale === "1") {
-          scaleClass = "";
+      // Change SVG path to destination and add fallback
+      root.walkDecls("background", async rule => {
+        // console.log(rule.parent.parent === root);
+        if (rule.parent.parent !== root) {
+          return;
         }
 
-        rule.after(
-          `\n\t.${
-            options.pngClass
-          }${scaleClass} .svgIcon { background: url(${absolutePNGPath}) ${width}px; }\n
-          `
-        );
-      }
-    });
+        rule.value = `url(${absoluteSVGPath}) ${width}px`;
 
-    await writeFile(sprite.css, root.toString());
-  }
+        for (let scale of Object.keys(png)) {
+          const absolutePNGPath = join(options.pngDest, basename(png[scale]));
+
+          let scaleClass = `,.${options.pngClassPrefix}${scale}x`;
+          if (scale === "1") {
+            scaleClass = "";
+          }
+
+          rule.after(
+            `\n\t.${
+              options.pngClass
+            }${scaleClass} .svgIcon { background: url(${absolutePNGPath}) ${width}px; }\n
+          `
+          );
+        }
+
+        return rule;
+      });
+
+      await writeFile(sprite.css, root.toString());
+    })
+  );
 }
 
 /**
@@ -159,23 +173,25 @@ function findSprites(path) {
   async function find(findPath, basePath) {
     const files = await readdir(findPath, { withFileTypes: true });
 
-    for await (file of files) {
-      const sprite = relative(basePath, findPath)
-        .split("/")
-        .join("-");
+    await Promise.all(
+      files.map(async file => {
+        const sprite = relative(basePath, findPath)
+          .split("/")
+          .join("-");
 
-      if (file.isDirectory()) {
-        await find(join(findPath, file.name), basePath);
-      } else {
-        if (extname(file.name) === ".svg") {
-          if (!found[sprite]) {
-            found[sprite] = [];
+        if (file.isDirectory()) {
+          await find(join(findPath, file.name), basePath);
+        } else {
+          if (extname(file.name) === ".svg") {
+            if (!found[sprite]) {
+              found[sprite] = [];
+            }
+
+            found[sprite].push(join(findPath, file.name));
           }
-
-          found[sprite].push(join(findPath, file.name));
         }
-      }
-    }
+      })
+    );
 
     return found;
   }
