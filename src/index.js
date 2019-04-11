@@ -27,7 +27,7 @@ const flushDir = promisify(fsExtra.emptyDir);
  * @param {string} options.cssPrefix Prefix in stylesheet name
  * @param {string} options.svgDest Path to SVG where it should be placed in site
  * @param {string} options.pngDest Path to SVG where it should be placed in site
- * @param {string} options.pngClass
+ * @param {string} options.pngClass PNG class in top of page to detect fallback need
  * @param {string} options.pngClassPrefix
  */
 async function generate(path, output = {}, converter, options) {
@@ -69,6 +69,7 @@ async function generate(path, output = {}, converter, options) {
   };
 
   const sprites = await findSprites(path, path);
+
   const svgSprites = [];
   for await (sprite of Object.keys(sprites)) {
     const config = {
@@ -114,14 +115,13 @@ async function generate(path, output = {}, converter, options) {
 async function convert(converter, svgSprites, options) {
   for await (sprite of svgSprites) {
     const css = await readFile(sprite.css);
-    const png = await converter.process(sprite.svg);
-
     const root = postcss.parse(css.toString());
 
-    const absoluteSVGPath = join(options.svgDest, basename(sprite.svg));
-
+    const png = await converter.process(sprite.svg);
     const svgFile = await readFile(sprite.svg);
     const width = imageSize(svgFile).width;
+
+    const absoluteSVGPath = join(options.svgDest, basename(sprite.svg));
 
     // Change SVG path to destination and add fallback
     root.walkDecls("background", async rule => {
@@ -130,7 +130,7 @@ async function convert(converter, svgSprites, options) {
       for await (let scale of Object.keys(png)) {
         const absolutePNGPath = join(options.pngDest, basename(png[scale]));
 
-        let scaleClass = `.${options.pngClassPrefix}${scale}x, `;
+        let scaleClass = `,.${options.pngClassPrefix}${scale}x`;
         if (scale === "1") {
           scaleClass = "";
         }
@@ -138,13 +138,11 @@ async function convert(converter, svgSprites, options) {
         rule.after(
           `\n\t.${
             options.pngClass
-          }, ${scaleClass}.svgIcon { background: url(${absolutePNGPath}) ${width}px; }\n
+          }${scaleClass} .svgIcon { background: url(${absolutePNGPath}) ${width}px; }\n
           `
         );
       }
     });
-
-    await writeFile(sprite.css, root.toString());
 
     await writeFile(sprite.css, root.toString());
   }
