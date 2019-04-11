@@ -1,8 +1,10 @@
 const SVGSpriter = require("svg-sprite");
 const fs = require("fs");
 const fsExtra = require("fs-extra");
-const { extname, join, relative } = require("path");
+const { extname, join, relative, basename } = require("path");
 const { promisify } = require("util");
+const postcss = require("postcss");
+const imageSize = require("image-size");
 
 const BaseConverter = require("./convert/BaseConverter");
 
@@ -23,6 +25,10 @@ const flushDir = promisify(fsExtra.emptyDir);
  * @param {BaseConverter} converter SVG to PNG converter
  * @param {Object} options
  * @param {string} options.cssPrefix Prefix in stylesheet name
+ * @param {string} options.svgDest Path to SVG where it should be placed in site
+ * @param {string} options.pngDest Path to SVG where it should be placed in site
+ * @param {string} options.pngClass
+ * @param {string} options.pngClassPrefix
  */
 async function generate(path, output = {}, converter, options) {
   const { pngPath, svgPath, cssPath } = output;
@@ -37,7 +43,16 @@ async function generate(path, output = {}, converter, options) {
       dimension: {
         maxHeight: 50,
         attributes: true
+      },
+      spacing: {
+        padding: 2
       }
+    },
+    svg: {
+      xmlDeclaration: false,
+      doctypeDeclaration: false,
+      namespaceIDs: false,
+      dimensionAttributes: false
     },
     mode: {
       css: {
@@ -62,7 +77,8 @@ async function generate(path, output = {}, converter, options) {
         css: {
           ...baseConfig.mode.css,
           sprite: `${sprite || "sprite"}.svg`,
-          prefix: `.svgSprite-${sprite}__%s`,
+          prefix: `.svgIcon-${sprite}__%s`,
+          common: `svgIcon .svgIcon-${sprite}`,
           render: {
             less: {
               dest: join(cssPath, `${options.cssPrefix}${sprite}`) + ".less"
@@ -87,13 +103,50 @@ async function generate(path, output = {}, converter, options) {
     await writeFile(css, res.css.less.contents.toString());
     await writeFile(svg, res.css.sprite.contents.toString());
 
-    svgSprites.push({ css, svg });
+    svgSprites.push({ css, svg, name: sprite });
   }
 
   if (converter) {
-    for await (sprite of svgSprites) {
-      const png = await converter.process(sprite.svg);
-    }
+    await convert(converter, svgSprites, options);
+  }
+}
+
+async function convert(converter, svgSprites, options) {
+  for await (sprite of svgSprites) {
+    const css = await readFile(sprite.css);
+    const png = await converter.process(sprite.svg);
+
+    const root = postcss.parse(css.toString());
+
+    const absoluteSVGPath = join(options.svgDest, basename(sprite.svg));
+
+    const svgFile = await readFile(sprite.svg);
+    const width = imageSize(svgFile).width;
+
+    // Change SVG path to destination and add fallback
+    root.walkDecls("background", async rule => {
+      rule.value = `url(${absoluteSVGPath}) ${width}px`;
+
+      for await (let scale of Object.keys(png)) {
+        const absolutePNGPath = join(options.pngDest, basename(png[scale]));
+
+        let scaleClass = `.${options.pngClassPrefix}${scale}x, `;
+        if (scale === "1") {
+          scaleClass = "";
+        }
+
+        rule.after(
+          `\n\t.${
+            options.pngClass
+          }, ${scaleClass}.svgIcon { background: url(${absolutePNGPath}) ${width}px; }\n
+          `
+        );
+      }
+    });
+
+    await writeFile(sprite.css, root.toString());
+
+    await writeFile(sprite.css, root.toString());
   }
 }
 

@@ -1,13 +1,13 @@
 const cp = require("child_process");
 const { promisify } = require("util");
-const { resolve } = require("path");
+const { resolve, basename, join } = require("path");
 
 const exec = promisify(cp.exec);
 const BaseConverter = require("./BaseConverter");
 
 class InkscapeConverter extends BaseConverter {
-  constructor(scales, binary) {
-    super(scales);
+  constructor(scales, output, binary) {
+    super(scales, output);
     this.binary = binary;
   }
 
@@ -17,8 +17,12 @@ class InkscapeConverter extends BaseConverter {
     const result = {};
 
     for await (let scale of this.scales) {
-      const pngPath =
-        svgPath.substr(0, svgPath.lastIndexOf(".")) + `_${scale}x.png`;
+      const svgName = basename(svgPath);
+
+      const pngPath = join(
+        this.output,
+        svgName.substr(0, svgName.lastIndexOf(".")) + `_${scale}x.png`
+      );
 
       await exec(
         `${this.binary} ${svgPath} -e ${pngPath} -d=${scale * 92} --without-gui`
