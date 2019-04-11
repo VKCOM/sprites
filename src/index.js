@@ -14,6 +14,7 @@ const mkdir = promisify(fs.mkdir);
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 const flushDir = promisify(fsExtra.emptyDir);
+const lstat = promisify(fs.lstat);
 
 /**
  *
@@ -171,7 +172,7 @@ function findSprites(path) {
   const found = [];
 
   async function find(findPath, basePath) {
-    const files = await readdir(findPath, { withFileTypes: true });
+    const files = await readdir(findPath);
 
     await Promise.all(
       files.map(async file => {
@@ -179,15 +180,18 @@ function findSprites(path) {
           .split("/")
           .join("-");
 
-        if (file.isDirectory()) {
-          await find(join(findPath, file.name), basePath);
+        join(findPath, file);
+        const fileStat = await lstat(join(findPath, file));
+
+        if (fileStat.isDirectory()) {
+          await find(join(findPath, file), basePath);
         } else {
-          if (extname(file.name) === ".svg") {
+          if (extname(file) === ".svg") {
             if (!found[sprite]) {
               found[sprite] = [];
             }
 
-            found[sprite].push(join(findPath, file.name));
+            found[sprite].push(join(findPath, file));
           }
         }
       })
