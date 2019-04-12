@@ -88,7 +88,7 @@ async function generate(path, output = {}, converter, options) {
             ...baseConfig.mode.css,
             sprite: `${sprite || "sprite"}.svg`,
             prefix: `.svgIcon-${sprite}__%s`,
-            common: `svgIcon .svgIcon-${sprite}`,
+            common: `svgIcon.svgIcon-${sprite}`,
             render: {
               less: {
                 dest: join(cssPath, `${options.cssPrefix}${sprite}`) + ".less"
