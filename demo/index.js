@@ -19,9 +19,13 @@ const InkscapeConverter = require("../src/convert/InkscapeConverter");
       svgPath,
       cssPath
     },
-    new InkscapeConverter([2], "/opt/local/bin/inkscape"),
+    new InkscapeConverter([1, 2], pngPath, "/opt/local/bin/inkscape"),
     {
-      cssPrefix: "VK-"
+      cssPrefix: "sprite-",
+      svgDest: "/images/mobile/icons/svg/",
+      pngDest: "/images/mobile/icons/svg/",
+      pngClass: "png",
+      pngClassPrefix: "vk_"
     }
   );
 

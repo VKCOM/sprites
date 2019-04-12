@@ -4,9 +4,11 @@ class BaseConverter {
   /**
    *
    * @param {Number[]} scales Array of scales need to return
+   * @param {string} output Folder where PNG will be saved
    */
-  constructor(scales = [1]) {
+  constructor(scales = [1], output) {
     this.scales = scales;
+    this.output = output;
   }
 
   /**
