@@ -147,7 +147,7 @@ async function convert(converter, svgSprites, options) {
           return;
         }
 
-        rule.value = `url(${absoluteSVGPath}) 0 0 / ${width}px`;
+        rule.value = `url(${absoluteSVGPath}) 0 0 / ~"${width}px"`;
 
         for (let scale of Object.keys(png)) {
           const absolutePNGPath = join(options.pngDest, basename(png[scale]));
@@ -160,7 +160,7 @@ async function convert(converter, svgSprites, options) {
           rule.after(
             `\n\t.${
               options.pngClass
-            }${scaleClass} .svgIcon { background: url(${absolutePNGPath}) 0 0 / ${width}px no-repeat; }\n
+            }${scaleClass} .svgIcon { background: url(${absolutePNGPath}) 0 0 / ~"${width}px" no-repeat; }\n
           `
           );
         }
