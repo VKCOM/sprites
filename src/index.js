@@ -59,7 +59,7 @@ async function generate(path, output = {}, converter, options) {
     svg: {
       xmlDeclaration: false,
       doctypeDeclaration: false,
-      namespaceIDs: false,
+      namespaceIDs: true,
       dimensionAttributes: false
     },
     mode: {
