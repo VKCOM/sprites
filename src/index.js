@@ -47,9 +47,6 @@ async function generate(path, output = {}, converter, options) {
         maxHeight: 50,
         attributes: true
       },
-      spacing: {
-        padding: 2
-      },
       id: {
         generator: function(name, file) {
           return file.stem;

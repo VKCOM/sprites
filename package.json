@@ -1,13 +1,12 @@
 {
   "name": "@vkontakte/sprites",
-  "version": "0.0.14",
+  "version": "0.0.16",
   "main": "src/index.js",
   "license": "MIT",
   "dependencies": {
     "fs-extra": "^7.0.1",
     "image-size": "^0.7.3",
     "postcss": "^7.0.14",
-    "postcss-resolve-prop": "^3.1.0",
     "svg-path-tools": "^1.0.0",
     "svg-sprite": "^1.5.0",
     "svgson-next": "^4.3.0"
