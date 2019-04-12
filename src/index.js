@@ -151,7 +151,7 @@ async function convert(converter, svgSprites, options) {
         for (let scale of Object.keys(png)) {
           const absolutePNGPath = join(options.pngDest, basename(png[scale]));
 
-          let scaleClass = `,.${options.pngClassPrefix}${scale}x`;
+          let scaleClass = `.${options.pngClassPrefix}${scale}x`;
           if (scale === "1") {
             scaleClass = "";
           }
