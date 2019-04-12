@@ -5,6 +5,8 @@ const { extname, join, relative, basename } = require("path");
 const { promisify } = require("util");
 const postcss = require("postcss");
 const imageSize = require("image-size");
+const svgson = require("svgson-next");
+const { parse, stringify } = require("svg-path-tools");
 
 const BaseConverter = require("./convert/BaseConverter");
 
@@ -111,8 +113,11 @@ async function generate(path, output = {}, converter, options) {
       const css = join(cssPath, res.css.less.basename);
       const svg = join(svgPath, res.css.sprite.basename);
 
+      const svgAST = await svgson.parse(res.css.sprite.contents.toString());
+      const svgContents = svgson.stringify(fixSVG(svgAST));
+
       await writeFile(css, res.css.less.contents.toString());
-      await writeFile(svg, res.css.sprite.contents.toString());
+      await writeFile(svg, svgContents);
 
       svgSprites.push({ css, svg, name: sprite });
 
@@ -222,6 +227,27 @@ async function checkDir(path, flush) {
   } catch (err) {
     await mkdir(path);
   }
+}
+
+/**
+ * Fix SVG for old versions of Inkscape
+ */
+function fixSVG(obj) {
+  obj.children = obj.children.map(value => {
+    if (value.name === "path") {
+      const d = value.attributes.d;
+
+      value.attributes.d = stringify(parse(d));
+    }
+
+    if (value.children) {
+      return fixSVG(value);
+    }
+
+    return value;
+  });
+
+  return obj;
 }
 
 module.exports = generate;
