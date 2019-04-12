@@ -160,7 +160,7 @@ async function convert(converter, svgSprites, options) {
           rule.after(
             `\n\t.${
               options.pngClass
-            }${scaleClass} .svgIcon { background: url(${absolutePNGPath}) 0 0 / ~"${width}px" no-repeat; }\n
+            }${scaleClass} & { background: url(${absolutePNGPath}) 0 0 / ~"${width}px" no-repeat; }\n
           `
           );
         }
