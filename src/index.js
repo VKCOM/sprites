@@ -142,7 +142,6 @@ async function convert(converter, svgSprites, options) {
 
       // Change SVG path to destination and add fallback
       root.walkDecls("background", async rule => {
-        // console.log(rule.parent.parent === root);
         if (rule.parent.parent !== root) {
           return;
         }
@@ -160,8 +159,8 @@ async function convert(converter, svgSprites, options) {
           rule.after(
             `\n\t.${
               options.pngClass
-            }${scaleClass} & { background: url(${absolutePNGPath}) 0 0 / ~"${width}px" no-repeat; }\n
-          `
+            }${scaleClass} & { background-image: url(${absolutePNGPath}); }\n
+              `
           );
         }
 
