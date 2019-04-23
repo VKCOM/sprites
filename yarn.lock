@@ -1015,10 +1015,6 @@ oauth-sign@~0.9.0:
   version "0.9.0"
   resolved "https://registry.yarnpkg.com/oauth-sign/-/oauth-sign-0.9.0.tgz#47a7b016baa68b5fa0ecf3dee08a85c679ac6455"
 
-object-assign@^4.0.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/object-assign/-/object-assign-4.1.1.tgz#2109adc7965887cfc05cbbd442cac8bfbb360863"
-
 object-keys@^1.0.12:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/object-keys/-/object-keys-1.1.0.tgz#11bd22348dd2e096a045ab06f6c85bcc340fa032"
@@ -1135,20 +1131,6 @@ pinkie-promise@^2.0.0:
 pinkie@^2.0.0:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/pinkie/-/pinkie-2.0.4.tgz#72556b80cfa0d48a974e80e77248e80ed4f7f870"
-
-postcss-each-decl@^1.0.1:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/postcss-each-decl/-/postcss-each-decl-1.0.2.tgz#2708e385a939b7af6115e713fb9724fe5f7884fe"
-  dependencies:
-    tcomb-postcss "^1.0.0"
-
-postcss-resolve-prop@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/postcss-resolve-prop/-/postcss-resolve-prop-3.1.0.tgz#c35700277c0ac8216aac5d1687704b1a06df070c"
-  dependencies:
-    object-assign "^4.0.1"
-    postcss-each-decl "^1.0.1"
-    tcomb-postcss "^1.0.2"
 
 postcss@^7.0.14:
   version "7.0.14"
@@ -1498,16 +1480,6 @@ svgson-next@^4.3.0:
     deep-rename-keys "^0.2.1"
     omit-deep "0.3.0"
     xml-reader "2.4.3"
-
-tcomb-postcss@^1.0.0, tcomb-postcss@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/tcomb-postcss/-/tcomb-postcss-1.0.2.tgz#b407b6e90cfb34df0ebbc3c8faa460dccaeb97ee"
-  dependencies:
-    tcomb "^2.4.1"
-
-tcomb@^2.4.1:
-  version "2.7.0"
-  resolved "https://registry.yarnpkg.com/tcomb/-/tcomb-2.7.0.tgz#10d62958041669a5d53567b9a4ee8cde22b1c2b0"
 
 text-hex@1.0.x:
   version "1.0.0"
