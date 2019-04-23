@@ -1,5 +1,9 @@
 # @vkontakte/sprites
 
+![Module version badge](https://img.shields.io/npm/v/@vkontakte/sprites.svg)
+![License badge](https://img.shields.io/github/license/VKCOM/sprites.svg)
+![Minimum Node.JS version badge](https://img.shields.io/node/v/@vkontakte/sprites.svg)
+
 Module for generate SVG sprites and PNG fallback that used in m.vk.com
 
 ## Requirements
@@ -7,6 +11,10 @@ Module for generate SVG sprites and PNG fallback that used in m.vk.com
 Inkscape (>= 0.48.5)
 
 Node.JS (>= 8)
+
+## Install
+
+`npm install @vkontakte/sprites` or `yarn add @vkontakte/sprites`
 
 ## Demo
 
