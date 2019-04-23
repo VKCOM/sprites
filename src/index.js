@@ -1,21 +1,17 @@
 const SVGSpriter = require("svg-sprite");
 const fs = require("fs");
-const fsExtra = require("fs-extra");
 const { extname, join, relative, basename } = require("path");
 const { promisify } = require("util");
 const postcss = require("postcss");
 const imageSize = require("image-size");
 const svgson = require("svgson-next");
-const { parse, stringify } = require("svg-path-tools");
 
 const BaseConverter = require("./convert/BaseConverter");
+const { fixSVG, mergeDeep, checkDir } = require("./utils");
 
 const readdir = promisify(fs.readdir);
-const stat = promisify(fs.stat);
-const mkdir = promisify(fs.mkdir);
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
-const flushDir = promisify(fsExtra.emptyDir);
 const lstat = promisify(fs.lstat);
 
 /**
@@ -27,14 +23,35 @@ const lstat = promisify(fs.lstat);
  * @param {string} output.cssPath Path to folder where stylesheets will be saved
  * @param {BaseConverter} converter SVG to PNG converter
  * @param {Object} options
- * @param {string} options.cssPrefix Prefix in stylesheet name
- * @param {string} options.svgDest Path to SVG where it should be placed in site
- * @param {string} options.pngDest Path to SVG where it should be placed in site
- * @param {string} options.pngClass PNG class in top of page to detect fallback need
- * @param {string} options.pngClassPrefix
+ * @param {Object} options.css
+ * @param {string} options.css.stylesheetPrefix Prefix in stylesheet name
+ * @param {string} options.css.class Base class for icons
+ * @param {Object} options.svg
+ * @param {string} options.svg.dest Path to SVG where it should be placed on website
+ * @param {Object} options.png
+ * @param {string} options.png.dest Path to SVG where it should be placed on website
+ * @param {string} options.png.class PNG class in top of DOM (e.g in the `<head>` or `<body>`) to detect fallback need
+ * @param {string} options.png.scalePrefix Prefix for class with needed scale. E.g `png_2x` or `fallback_1x`
  */
 async function generate(path, output = {}, converter, options) {
   const { pngPath, svgPath, cssPath } = output;
+
+  const defaultOptions = {
+    css: {
+      stylesheetPrefix: "icons-",
+      class: "Icon"
+    },
+    svg: {
+      dest: "/"
+    },
+    png: {
+      dest: "/",
+      class: "png",
+      scalePrefix: "scale"
+    }
+  };
+
+  options = mergeDeep(defaultOptions, options);
 
   await checkDir(path);
   await checkDir(pngPath, true);
@@ -46,9 +63,6 @@ async function generate(path, output = {}, converter, options) {
       dimension: {
         maxHeight: 50,
         attributes: true
-      },
-      spacing: {
-        padding: 2
       },
       id: {
         generator: function(name, file) {
@@ -65,7 +79,7 @@ async function generate(path, output = {}, converter, options) {
     mode: {
       css: {
         dest: cssPath,
-        common: "svgIcon",
+        common: options.css.class,
         dimensions: true,
         bust: true,
         render: {
@@ -86,12 +100,14 @@ async function generate(path, output = {}, converter, options) {
         mode: {
           css: {
             ...baseConfig.mode.css,
-            sprite: `${sprite || "sprite"}.svg`,
-            prefix: `.svgIcon-${sprite}__%s`,
-            common: `svgIcon .svgIcon-${sprite}`,
+            sprite: `${sprite}.svg`,
+            prefix: `.${options.css.class}-${sprite}__%s`,
+            common: `${options.css.class}-${sprite}`,
             render: {
               less: {
-                dest: join(cssPath, `${options.cssPrefix}${sprite}`) + ".less"
+                dest:
+                  join(cssPath, `${options.css.stylesheetPrefix}${sprite}`) +
+                  ".less"
               }
             }
           }
@@ -138,7 +154,7 @@ async function convert(converter, svgSprites, options) {
       const svgFile = await readFile(sprite.svg);
       const width = imageSize(svgFile).width;
 
-      const absoluteSVGPath = join(options.svgDest, basename(sprite.svg));
+      const absoluteSVGPath = join(options.svg.dest, basename(sprite.svg));
 
       // Change SVG path to destination and add fallback
       root.walkDecls("background", async rule => {
@@ -146,19 +162,20 @@ async function convert(converter, svgSprites, options) {
           return;
         }
 
-        rule.value = `url(${absoluteSVGPath}) 0 0 / ~"${width}px"`;
+        rule.after(`\n\tbackground-size: ${width}px;`);
+        rule.value = `url(${absoluteSVGPath})`;
 
         for (let scale of Object.keys(png)) {
-          const absolutePNGPath = join(options.pngDest, basename(png[scale]));
+          const absolutePNGPath = join(options.png.dest, basename(png[scale]));
 
-          let scaleClass = `.${options.pngClassPrefix}${scale}x`;
+          let scaleClass = `.${options.png.scalePrefix}${scale}x`;
           if (scale === "1") {
             scaleClass = "";
           }
 
           rule.after(
             `\n\t.${
-              options.pngClass
+              options.png.class
             }${scaleClass} & { background-image: url(${absolutePNGPath}); }\n
               `
           );
@@ -210,43 +227,6 @@ function findSprites(path) {
   }
 
   return find(path, path);
-}
-
-async function checkDir(path, flush) {
-  if (!path) {
-    return;
-  }
-
-  try {
-    await stat(path);
-
-    if (flush) {
-      await flushDir(path);
-    }
-  } catch (err) {
-    await mkdir(path);
-  }
-}
-
-/**
- * Fix SVG for old versions of Inkscape
- */
-function fixSVG(obj) {
-  obj.children = obj.children.map(value => {
-    if (value.name === "path") {
-      const d = value.attributes.d;
-
-      value.attributes.d = stringify(parse(d));
-    }
-
-    if (value.children) {
-      return fixSVG(value);
-    }
-
-    return value;
-  });
-
-  return obj;
 }
 
 module.exports = generate;

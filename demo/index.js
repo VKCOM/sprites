@@ -21,11 +21,17 @@ const InkscapeConverter = require("../src/convert/InkscapeConverter");
     },
     new InkscapeConverter([1, 2], pngPath, "/opt/local/bin/inkscape"),
     {
-      cssPrefix: "sprite-",
-      svgDest: "/images/mobile/icons/svg/",
-      pngDest: "/images/mobile/icons/svg/",
-      pngClass: "png",
-      pngClassPrefix: "vk_"
+      css: {
+        stylesheetPrefix: "sprite-"
+      },
+      svg: {
+        dest: "/images/mobile/icons/svg/"
+      },
+      png: {
+        scalePrefix: "vk_",
+        class: "png",
+        dest: "/images/mobile/icons/svg"
+      }
     }
   );
 

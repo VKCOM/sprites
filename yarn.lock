@@ -1136,6 +1136,8 @@ pinkie@^2.0.0:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/pinkie/-/pinkie-2.0.4.tgz#72556b80cfa0d48a974e80e77248e80ed4f7f870"
 
+<<<<<<< HEAD
+=======
 postcss-each-decl@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/postcss-each-decl/-/postcss-each-decl-1.0.2.tgz#2708e385a939b7af6115e713fb9724fe5f7884fe"
@@ -1150,6 +1152,7 @@ postcss-resolve-prop@^3.1.0:
     postcss-each-decl "^1.0.1"
     tcomb-postcss "^1.0.2"
 
+>>>>>>> origin/master
 postcss@^7.0.14:
   version "7.0.14"
   resolved "https://registry.yarnpkg.com/postcss/-/postcss-7.0.14.tgz#4527ed6b1ca0d82c53ce5ec1a2041c2346bbd6e5"
@@ -1499,6 +1502,8 @@ svgson-next@^4.3.0:
     omit-deep "0.3.0"
     xml-reader "2.4.3"
 
+<<<<<<< HEAD
+=======
 tcomb-postcss@^1.0.0, tcomb-postcss@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/tcomb-postcss/-/tcomb-postcss-1.0.2.tgz#b407b6e90cfb34df0ebbc3c8faa460dccaeb97ee"
@@ -1509,6 +1514,7 @@ tcomb@^2.4.1:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/tcomb/-/tcomb-2.7.0.tgz#10d62958041669a5d53567b9a4ee8cde22b1c2b0"
 
+>>>>>>> origin/master
 text-hex@1.0.x:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/text-hex/-/text-hex-1.0.0.tgz#69dc9c1b17446ee79a92bf5b884bb4b9127506f5"

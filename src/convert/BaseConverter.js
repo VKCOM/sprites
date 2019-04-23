@@ -15,6 +15,8 @@ class BaseConverter {
    * Process SVG file and get PNG in several scales
    *
    * @param {string} svg Path to SVG file will be converted
+   *
+   * @returns {Object} File path for every scale
    */
   process(svg) {}
 }
