@@ -162,7 +162,8 @@ async function convert(converter, svgSprites, options) {
           return;
         }
 
-        rule.value = `url(${absoluteSVGPath}) 0 0 / ~"${width}px"`;
+        rule.after(`\n\tbackground-size: ${width}px;`);
+        rule.value = `url(${absoluteSVGPath})`;
 
         for (let scale of Object.keys(png)) {
           const absolutePNGPath = join(options.png.dest, basename(png[scale]));
