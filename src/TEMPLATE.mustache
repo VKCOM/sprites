@@ -3,26 +3,23 @@
   All changes will be flushed after rebuild
 */
 
-{{#shapes}}{{#selector.shape}}{{expression}}{{^last}},
-{{/last}}{{/selector.shape}} {
-  background-position: {{position.absolute.xy}};
-  background-image: url("{{{sprite}}}");
-  background-repeat: no-repeat;{{#dimensions.inline}}
-  width: {{width.outer}}px;
-  height: {{height.outer}}px;{{/dimensions.inline}}
+.{{common}} {
   background-size: {{spriteWidth}}px {{spriteHeight}}px;
+  background-image: url('{{&options.svg.dest}}{{{sprite}}}');
 
   {{#scales}}
   .{{options.png.class}}.{{options.png.scalePrefix}}{{.}}x & {
     background-image: url('%png-path-{{.}}%');
   }
   {{/scales}}
-}{{#dimensions.extra}}
+}
 
-{{#selector.dimensions}}{{expression}}{{^last}},
-{{/last}}{{/selector.dimensions}} {
+{{#shapes}}{{#selector.shape}}{{expression}}{{^last}},
+{{/last}}{{/selector.shape}} {
+  background-position: {{position.absolute.xy}};
+  background-repeat: no-repeat;{{#dimensions.inline}}
   width: {{width.outer}}px;
-  height: {{height.outer}}px;
-}{{/dimensions.extra}}
+  height: {{height.outer}}px;{{/dimensions.inline}}
+}
 
 {{/shapes}}

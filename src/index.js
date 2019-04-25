@@ -136,7 +136,7 @@ async function generate(path, output = {}, converter, options) {
         })
       );
 
-      spriter.compile(async (err, res, data) => {
+      spriter.compile(async (err, res) => {
         const css = join(cssPath, res.css.less.basename);
         const svg = join(svgPath, res.css.sprite.basename);
 
