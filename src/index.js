@@ -2,8 +2,6 @@ const SVGSpriter = require("svg-sprite");
 const fs = require("fs");
 const { extname, join, relative, basename } = require("path");
 const { promisify } = require("util");
-const postcss = require("postcss");
-const imageSize = require("image-size");
 const svgson = require("svgson-next");
 
 const BaseConverter = require("./convert/BaseConverter");
@@ -76,6 +74,16 @@ async function generate(path, output = {}, converter, options) {
       namespaceIDs: true,
       dimensionAttributes: false
     },
+    variables: {
+      now: +new Date(),
+      png: function() {
+        return function(sprite, render) {
+          return render(sprite)
+            .split(".svg")
+            .join(".png");
+        };
+      }
+    },
     mode: {
       css: {
         dest: cssPath,
@@ -107,10 +115,15 @@ async function generate(path, output = {}, converter, options) {
               less: {
                 dest:
                   join(cssPath, `${options.css.stylesheetPrefix}${sprite}`) +
-                  ".less"
+                  ".less",
+                template: join(__dirname, "TEMPLATE.mustache")
               }
             }
           }
+        },
+        variables: {
+          options,
+          scales: converter.scales
         }
       };
 
@@ -123,23 +136,26 @@ async function generate(path, output = {}, converter, options) {
         })
       );
 
-      const compile = promisify(spriter.compile).bind(spriter);
-      const res = await compile();
+      spriter.compile(async (err, res, data) => {
+        const css = join(cssPath, res.css.less.basename);
+        const svg = join(svgPath, res.css.sprite.basename);
 
-      const css = join(cssPath, res.css.less.basename);
-      const svg = join(svgPath, res.css.sprite.basename);
+        const svgAST = await svgson.parse(res.css.sprite.contents.toString());
+        const svgContents = svgson.stringify(fixSVG(svgAST));
 
-      const svgAST = await svgson.parse(res.css.sprite.contents.toString());
-      const svgContents = svgson.stringify(fixSVG(svgAST));
+        await writeFile(css, res.css.less.contents.toString());
+        await writeFile(svg, svgContents);
 
-      await writeFile(css, res.css.less.contents.toString());
-      await writeFile(svg, svgContents);
+        svgSprites.push({
+          css,
+          svg,
+          name: sprite
+        });
 
-      svgSprites.push({ css, svg, name: sprite });
-
-      if (converter) {
-        await convert(converter, svgSprites, options);
-      }
+        if (converter) {
+          await convert(converter, svgSprites, options);
+        }
+      });
     })
   );
 }
@@ -147,44 +163,16 @@ async function generate(path, output = {}, converter, options) {
 async function convert(converter, svgSprites, options) {
   await Promise.all(
     svgSprites.map(async sprite => {
-      const css = await readFile(sprite.css);
-      const root = postcss.parse(css.toString());
-
       const png = await converter.process(sprite.svg);
-      const svgFile = await readFile(sprite.svg);
-      const width = imageSize(svgFile).width;
 
-      const absoluteSVGPath = join(options.svg.dest, basename(sprite.svg));
+      let css = await readFile(sprite.css);
+      for (let scale of Object.keys(png)) {
+        const absolutePNGPath = join(options.png.dest, basename(png[scale]));
 
-      // Change SVG path to destination and add fallback
-      root.walkDecls("background", async rule => {
-        if (rule.parent.parent !== root) {
-          return;
-        }
+        css = css.toString().replace(`%png-path-${scale}%`, absolutePNGPath);
+      }
 
-        rule.after(`\n\tbackground-size: ${width}px;`);
-        rule.value = `url(${absoluteSVGPath})`;
-
-        for (let scale of Object.keys(png)) {
-          const absolutePNGPath = join(options.png.dest, basename(png[scale]));
-
-          let scaleClass = `.${options.png.scalePrefix}${scale}x`;
-          if (scale === "1") {
-            scaleClass = "";
-          }
-
-          rule.after(
-            `\n\t.${
-              options.png.class
-            }${scaleClass} & { background-image: url(${absolutePNGPath}); }\n
-              `
-          );
-        }
-
-        return rule;
-      });
-
-      await writeFile(sprite.css, root.toString());
+      await writeFile(sprite.css, css.toString());
     })
   );
 }
