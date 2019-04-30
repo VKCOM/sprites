@@ -136,26 +136,30 @@ async function generate(path, output = {}, converter, options) {
         })
       );
 
-      spriter.compile(async (err, res) => {
-        const css = join(cssPath, res.css.less.basename);
-        const svg = join(svgPath, res.css.sprite.basename);
+      await new Promise((resolve) => {
+        spriter.compile(async (err, res) => {
+          const css = join(cssPath, res.css.less.basename);
+          const svg = join(svgPath, res.css.sprite.basename);
 
-        const svgAST = await svgson.parse(res.css.sprite.contents.toString());
-        const svgContents = svgson.stringify(fixSVG(svgAST));
+          const svgAST = await svgson.parse(res.css.sprite.contents.toString());
+          const svgContents = svgson.stringify(fixSVG(svgAST));
 
-        await writeFile(css, res.css.less.contents.toString());
-        await writeFile(svg, svgContents);
+          await writeFile(css, res.css.less.contents.toString());
+          await writeFile(svg, svgContents);
 
-        svgSprites.push({
-          css,
-          svg,
-          name: sprite
-        });
+          svgSprites.push({
+            css,
+            svg,
+            name: sprite
+          });
 
-        if (converter) {
-          await convert(converter, svgSprites, options);
-        }
-      });
+          if (converter) {
+            await convert(converter, svgSprites, options);
+          }
+
+          resolve();
+        })
+      })
     })
   );
 }
