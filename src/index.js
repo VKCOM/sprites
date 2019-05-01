@@ -100,9 +100,8 @@ async function generate(path, output = {}, converter, options) {
 
   const sprites = await findSprites(path, path);
 
-  const svgSprites = [];
   await Promise.all(
-    Object.keys(sprites).map(async sprite => {
+    await Object.keys(sprites).map(async sprite => {
       const config = {
         ...baseConfig,
         mode: {
@@ -147,14 +146,12 @@ async function generate(path, output = {}, converter, options) {
           await writeFile(css, res.css.less.contents.toString());
           await writeFile(svg, svgContents);
 
-          svgSprites.push({
-            css,
-            svg,
-            name: sprite
-          });
-
           if (converter) {
-            await convert(converter, svgSprites, options);
+            await convert(converter, {
+              css,
+              svg,
+              name: sprite
+            }, options);
           }
 
           resolve();
@@ -164,21 +161,18 @@ async function generate(path, output = {}, converter, options) {
   );
 }
 
-async function convert(converter, svgSprites, options) {
-  await Promise.all(
-    svgSprites.map(async sprite => {
-      const png = await converter.process(sprite.svg);
+async function convert(converter, sprite, options) {
+  const png = await converter.process(sprite.svg);
 
-      let css = await readFile(sprite.css);
-      for (let scale of Object.keys(png)) {
-        const absolutePNGPath = join(options.png.dest, basename(png[scale]));
+  let css = await readFile(sprite.css);
 
-        css = css.toString().replace(`%png-path-${scale}%`, absolutePNGPath);
-      }
+  for (let scale of Object.keys(png)) {
+    const absolutePNGPath = join(options.png.dest, basename(png[scale]));
 
-      await writeFile(sprite.css, css.toString());
-    })
-  );
+    css = css.toString().replace(`%png-path-${scale}%`, absolutePNGPath);
+  }
+
+  await writeFile(sprite.css, css.toString())
 }
 
 /**
