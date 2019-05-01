@@ -101,7 +101,7 @@ async function generate(path, output = {}, converter, options) {
   const sprites = await findSprites(path, path);
 
   await Promise.all(
-    await Object.keys(sprites).map(async sprite => {
+    Object.keys(sprites).map(async sprite => {
       const config = {
         ...baseConfig,
         mode: {
@@ -155,8 +155,8 @@ async function generate(path, output = {}, converter, options) {
           }
 
           resolve();
-        })
-      })
+        });
+      });
     })
   );
 }
