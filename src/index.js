@@ -59,7 +59,6 @@ async function generate(path, output = {}, converter, options) {
   const baseConfig = {
     shape: {
       dimension: {
-        maxHeight: 50,
         attributes: true
       },
       id: {
