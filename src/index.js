@@ -1,6 +1,6 @@
 const SVGSpriter = require("svg-sprite");
 const fs = require("fs");
-const { extname, join, relative, basename, dirname } = require("path");
+const { extname, join, relative, basename, parse } = require("path");
 const { promisify } = require("util");
 const svgson = require("svgson-next");
 
@@ -239,20 +239,18 @@ async function removeOldFiles(svg, svgPath, pngPath) {
         .slice(0, -1)
         .join("-");
 
-      let fileHash = "";
+      const fileInfo = parse(file.split("-").pop());
+      const fileHash = fileInfo.name.split("_").shift();
       let filePath = "";
-      if (i === 0) {
-        fileHash = basename(file.split("-").pop(), ".svg");
-        filePath = svgPath;
-      } else if (i === 1) {
+
+      if (fileInfo.extname === ".png") {
         filePath = pngPath;
-        fileHash = basename(file.split("-").pop(), ".png")
-          .split("_")
-          .shift();
+      } else if (fileInfo.extname === ".svg") {
+        filePath = svgPath;
       }
 
       if (fileSpriteName === spriteName && hash !== fileHash) {
-        unlink(join(filePath, file));
+        fs.unlink(join(filePath, file), () => {});
       }
     })
   );
