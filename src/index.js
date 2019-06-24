@@ -225,12 +225,16 @@ function findSprites(path) {
 async function removeOldSVG(svg, path) {
   const spriteName = basename(svg)
     .split("-")
-    .slice(0, -1)[0];
+    .slice(0, -1)
+    .join("-");
 
   const files = await readdir(path);
 
   files.forEach(file => {
-    const fileSpriteName = file.split("-").slice(0, -1)[0];
+    const fileSpriteName = file
+      .split("-")
+      .slice(0, -1)
+      .join("-");
     if (file !== basename(svg) && fileSpriteName === spriteName) {
       unlink(join(path, file));
     }
