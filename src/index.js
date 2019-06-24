@@ -1,6 +1,6 @@
 const SVGSpriter = require("svg-sprite");
 const fs = require("fs");
-const { extname, join, relative, basename } = require("path");
+const { extname, join, relative, basename, dirname } = require("path");
 const { promisify } = require("util");
 const svgson = require("svgson-next");
 
@@ -10,6 +10,7 @@ const { fixSVG, mergeDeep, checkDir } = require("./utils");
 const readdir = promisify(fs.readdir);
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
+const unlink = promisify(fs.unlink);
 const lstat = promisify(fs.lstat);
 
 /**
@@ -52,9 +53,9 @@ async function generate(path, output = {}, converter, options) {
   options = mergeDeep(defaultOptions, options);
 
   await checkDir(path);
-  await checkDir(pngPath, true);
-  await checkDir(svgPath, true);
-  await checkDir(cssPath, true);
+  await checkDir(pngPath);
+  await checkDir(svgPath);
+  await checkDir(cssPath);
 
   const baseConfig = {
     shape: {
@@ -134,7 +135,7 @@ async function generate(path, output = {}, converter, options) {
         })
       );
 
-      await new Promise((resolve) => {
+      await new Promise(resolve => {
         spriter.compile(async (err, res) => {
           const css = join(cssPath, res.css.less.basename);
           const svg = join(svgPath, res.css.sprite.basename);
@@ -145,12 +146,18 @@ async function generate(path, output = {}, converter, options) {
           await writeFile(css, res.css.less.contents.toString());
           await writeFile(svg, svgContents);
 
+          removeOldSVG(svg, svgPath);
+
           if (converter) {
-            await convert(converter, {
-              css,
-              svg,
-              name: sprite
-            }, options);
+            await convert(
+              converter,
+              {
+                css,
+                svg,
+                name: sprite
+              },
+              options
+            );
           }
 
           resolve();
@@ -171,7 +178,8 @@ async function convert(converter, sprite, options) {
     css = css.toString().replace(`%png-path-${scale}%`, absolutePNGPath);
   }
 
-  await writeFile(sprite.css, css.toString())
+  await checkDir(dirname(sprite.css));
+  await writeFile(sprite.css, css.toString());
 }
 
 /**
@@ -212,6 +220,21 @@ function findSprites(path) {
   }
 
   return find(path, path);
+}
+
+async function removeOldSVG(svg, path) {
+  const spriteName = basename(svg)
+    .split("-")
+    .slice(0, -1)[0];
+
+  const files = await readdir(path);
+
+  files.forEach(file => {
+    const fileSpriteName = file.split("-").slice(0, -1)[0];
+    if (file !== basename(svg) && fileSpriteName === spriteName) {
+      unlink(join(path, file));
+    }
+  });
 }
 
 module.exports = generate;
