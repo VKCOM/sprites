@@ -146,7 +146,7 @@ async function generate(path, output = {}, converter, options) {
           await writeFile(css, res.css.less.contents.toString());
           await writeFile(svg, svgContents);
 
-          removeOldSVG(svg, svgPath);
+          removeOldFiles(svg, svgPath, pngPath);
 
           if (converter) {
             await convert(
@@ -178,7 +178,6 @@ async function convert(converter, sprite, options) {
     css = css.toString().replace(`%png-path-${scale}%`, absolutePNGPath);
   }
 
-  await checkDir(dirname(sprite.css));
   await writeFile(sprite.css, css.toString());
 }
 
@@ -222,23 +221,41 @@ function findSprites(path) {
   return find(path, path);
 }
 
-async function removeOldSVG(svg, path) {
+async function removeOldFiles(svg, svgPath, pngPath) {
   const spriteName = basename(svg)
     .split("-")
     .slice(0, -1)
     .join("-");
 
-  const files = await readdir(path);
+  const hash = basename(svg.split("-").pop(), ".svg");
 
-  files.forEach(file => {
-    const fileSpriteName = file
-      .split("-")
-      .slice(0, -1)
-      .join("-");
-    if (file !== basename(svg) && fileSpriteName === spriteName) {
-      unlink(join(path, file));
-    }
-  });
+  const svgFiles = await readdir(svgPath);
+  const pngFiles = await readdir(pngPath);
+
+  [svgFiles, pngFiles].forEach((files, i) =>
+    files.forEach(file => {
+      const fileSpriteName = basename(file)
+        .split("-")
+        .slice(0, -1)
+        .join("-");
+
+      let fileHash = "";
+      let filePath = "";
+      if (i === 0) {
+        fileHash = basename(file.split("-").pop(), ".svg");
+        filePath = svgPath;
+      } else if (i === 1) {
+        filePath = pngPath;
+        fileHash = basename(file.split("-").pop(), ".png")
+          .split("_")
+          .shift();
+      }
+
+      if (fileSpriteName === spriteName && hash !== fileHash) {
+        unlink(join(filePath, file));
+      }
+    })
+  );
 }
 
 module.exports = generate;
