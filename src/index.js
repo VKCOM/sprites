@@ -62,8 +62,11 @@ async function generate(path, output = {}, converter, options) {
       dimension: {
         attributes: true
       },
+      spacing: {
+        padding: 5,
+      },
       id: {
-        generator: function(name, file) {
+        generator: function (name, file) {
           return file.stem;
         }
       }
@@ -76,8 +79,8 @@ async function generate(path, output = {}, converter, options) {
     },
     variables: {
       now: +new Date(),
-      png: function() {
-        return function(sprite, render) {
+      png: function () {
+        return function (sprite, render) {
           return render(sprite)
             .split(".svg")
             .join(".png");
@@ -250,7 +253,7 @@ async function removeOldFiles(svg, svgPath, pngPath) {
       }
 
       if (fileSpriteName === spriteName && hash !== fileHash) {
-        fs.unlink(join(filePath, file), () => {});
+        fs.unlink(join(filePath, file), () => { });
       }
     })
   );
