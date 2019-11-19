@@ -57,7 +57,7 @@ async function generate(path, output = {}, converter, options) {
   await checkDir(svgPath);
   await checkDir(cssPath);
 
-  const baseConfig = {
+  const baseConfigGenerator = () => ({
     shape: {
       dimension: {
         attributes: true
@@ -99,12 +99,13 @@ async function generate(path, output = {}, converter, options) {
       }
     },
     dest: cssPath
-  };
+  });
 
   const sprites = await findSprites(path, path);
 
   await Promise.all(
     Object.keys(sprites).map(async sprite => {
+      const baseConfig = baseConfigGenerator();
       const config = {
         ...baseConfig,
         mode: {
@@ -129,7 +130,7 @@ async function generate(path, output = {}, converter, options) {
         }
       };
 
-      const spriter = new SVGSpriter(JSON.parse(JSON.stringify(config)));
+      const spriter = new SVGSpriter(config);
 
       await Promise.all(
         sprites[sprite].map(async image => {
