@@ -129,7 +129,7 @@ async function generate(path, output = {}, converter, options) {
         }
       };
 
-      const spriter = new SVGSpriter(config);
+      const spriter = new SVGSpriter(JSON.parse(JSON.stringify(config)));
 
       await Promise.all(
         sprites[sprite].map(async image => {
