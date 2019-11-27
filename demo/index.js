@@ -19,7 +19,7 @@ const InkscapeConverter = require("../src/convert/InkscapeConverter");
       svgPath,
       cssPath
     },
-    new InkscapeConverter([1, 2], pngPath, "/opt/local/bin/inkscape"),
+    new InkscapeConverter([1, 2], pngPath, "/Applications/Inkscape.app/Contents/MacOS/Inkscape"),
     {
       css: {
         stylesheetPrefix: "sprite-"

@@ -8,7 +8,7 @@ Module for generate SVG sprites and PNG fallback that used in m.vk.com
 
 ## Requirements
 
-Inkscape (>= 0.48.5)
+Inkscape (>= 0.91)
 
 Node.JS (>= 8)
 

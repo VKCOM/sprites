@@ -1,6 +1,7 @@
 const cp = require("child_process");
 const { promisify } = require("util");
 const { resolve, basename, join } = require("path");
+const semver = require('semver');
 
 const exec = promisify(cp.exec);
 const BaseConverter = require("./BaseConverter");
@@ -11,7 +12,29 @@ class InkscapeConverter extends BaseConverter {
     this.binary = binary;
   }
 
+  async loadVersion() {
+    if (this.version) {
+      return Promise.resolve();
+    }
+
+    const script = `${this.binary} -V`;
+
+    const versionRaw = (await exec(script)).stdout;
+
+    const version = /^(?:Inkscape )([^\s]*)/.exec(versionRaw)[1];
+
+    const validatedVersion = semver.coerce(version);
+
+    if (validatedVersion.major === 0 && validatedVersion.minor < 91) {
+      throw new Error('Unsupported Inkscape version'); 
+    }
+
+    this.version = validatedVersion;
+  }
+
   async process(svg) {
+    await this.loadVersion();
+
     const svgPath = resolve(svg);
 
     const result = {};
@@ -25,9 +48,19 @@ class InkscapeConverter extends BaseConverter {
           svgName.substr(0, svgName.lastIndexOf(".")) + `_${scale}x.png`
         );
 
+        let script = `${this.binary} ${svgPath} --export-dpi=${scale *
+          92} --without-gui`;
+
+        if (this.version.major === 1) {
+          script += ` --export-file=${pngPath}`;
+        } else if (this.version.major === 0 && this.version.minor >= 90) {
+          script += ` --export-png=${pngPath}`
+        } else {
+          throw new Error('Unsupported Inkscape version');
+        }
+
         await exec(
-          `${this.binary} ${svgPath} -e ${pngPath} -d=${scale *
-            92} --without-gui`
+          script
         );
 
         result[scale] = pngPath;
