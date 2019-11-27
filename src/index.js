@@ -2,10 +2,9 @@ const SVGSpriter = require("svg-sprite");
 const fs = require("fs");
 const { extname, join, relative, basename, parse } = require("path");
 const { promisify } = require("util");
-const svgson = require("svgson-next");
 
 const BaseConverter = require("./convert/BaseConverter");
-const { fixSVG, mergeDeep, checkDir } = require("./utils");
+const { mergeDeep, checkDir } = require("./utils");
 
 const readdir = promisify(fs.readdir);
 const writeFile = promisify(fs.writeFile);
@@ -141,11 +140,8 @@ async function generate(path, output = {}, converter, options) {
           const css = join(cssPath, res.css.less.basename);
           const svg = join(svgPath, res.css.sprite.basename);
 
-          const svgAST = await svgson.parse(res.css.sprite.contents.toString());
-          const svgContents = svgson.stringify(fixSVG(svgAST));
-
           await writeFile(css, res.css.less.contents.toString());
-          await writeFile(svg, svgContents);
+          await writeFile(svg, res.css.sprite.contents.toString());
 
           removeOldFiles(svg, svgPath, pngPath);
 

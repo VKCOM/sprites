@@ -29,27 +29,6 @@ function mergeDeep(target, ...sources) {
   return mergeDeep(target, ...sources);
 }
 
-/**
- * Fix SVG for old versions of Inkscape
- */
-function fixSVG(obj) {
-  obj.children = obj.children.map(value => {
-    if (value.name === "path") {
-      const d = value.attributes.d;
-
-      value.attributes.d = stringify(parse(d));
-    }
-
-    if (value.children) {
-      return fixSVG(value);
-    }
-
-    return value;
-  });
-
-  return obj;
-}
-
 async function checkDir(path, flush) {
   if (!path) {
     return;
@@ -69,6 +48,5 @@ async function checkDir(path, flush) {
 module.exports = {
   isObject,
   mergeDeep,
-  fixSVG,
   checkDir
 };
