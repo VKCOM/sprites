@@ -62,9 +62,6 @@ async function generate(path, output = {}, converter, options) {
       dimension: {
         attributes: true
       },
-      spacing: {
-        padding: 5,
-      },
       id: {
         generator: function (name, file) {
           return file.stem;
