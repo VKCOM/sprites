@@ -1,7 +1,6 @@
 const { promisify } = require("util");
 const fs = require("fs");
 const fsExtra = require("fs-extra");
-const { parse, stringify } = require("svg-path-tools");
 
 const stat = promisify(fs.stat);
 const mkdir = promisify(fs.mkdir);

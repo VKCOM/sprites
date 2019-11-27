@@ -3,13 +3,13 @@ const fs = require("fs");
 const { extname, join, relative, basename, parse } = require("path");
 const { promisify } = require("util");
 
+const GarbageCollector = require('./GarbageCollector');
 const BaseConverter = require("./convert/BaseConverter");
 const { mergeDeep, checkDir } = require("./utils");
 
 const readdir = promisify(fs.readdir);
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
-const unlink = promisify(fs.unlink);
 const lstat = promisify(fs.lstat);
 
 /**
@@ -55,6 +55,11 @@ async function generate(path, output = {}, converter, options) {
   await checkDir(pngPath);
   await checkDir(svgPath);
   await checkDir(cssPath);
+
+  const gc = new GarbageCollector();
+
+  gc.addPath(pngPath);
+  gc.addPath(svgPath);
 
   const baseConfigGenerator = () => ({
     shape: {
@@ -140,14 +145,16 @@ async function generate(path, output = {}, converter, options) {
           const css = join(cssPath, res.css.less.basename);
           const svg = join(svgPath, res.css.sprite.basename);
 
+          const hash = gc.extractHash(svg);
+          gc.addHash(hash);
+
           await writeFile(css, res.css.less.contents.toString());
           await writeFile(svg, res.css.sprite.contents.toString());
-
-          removeOldFiles(svg, svgPath, pngPath);
 
           if (converter) {
             await convert(
               converter,
+              gc,
               {
                 css,
                 svg,
@@ -162,15 +169,20 @@ async function generate(path, output = {}, converter, options) {
       });
     })
   );
+
+  await gc.clear();
 }
 
-async function convert(converter, sprite, options) {
+async function convert(converter, gc, sprite, options) {
   const png = await converter.process(sprite.svg);
 
   let css = await readFile(sprite.css);
 
   for (let scale of Object.keys(png)) {
     const absolutePNGPath = join(options.png.dest, basename(png[scale]));
+
+    const hash = gc.extractHash(absolutePNGPath);
+    gc.addHash(hash);
 
     css = css.toString().replace(`%png-path-${scale}%`, absolutePNGPath);
   }
@@ -216,41 +228,6 @@ function findSprites(path) {
   }
 
   return find(path, path);
-}
-
-async function removeOldFiles(svg, svgPath, pngPath) {
-  const spriteName = basename(svg)
-    .split("-")
-    .slice(0, -1)
-    .join("-");
-
-  const hash = basename(svg.split("-").pop(), ".svg");
-
-  const svgFiles = await readdir(svgPath);
-  const pngFiles = await readdir(pngPath);
-
-  [svgFiles, pngFiles].forEach((files, i) =>
-    files.forEach(file => {
-      const fileSpriteName = basename(file)
-        .split("-")
-        .slice(0, -1)
-        .join("-");
-
-      const fileInfo = parse(file.split("-").pop());
-      const fileHash = fileInfo.name.split("_").shift();
-      let filePath = "";
-
-      if (fileInfo.extname === ".png") {
-        filePath = pngPath;
-      } else if (fileInfo.extname === ".svg") {
-        filePath = svgPath;
-      }
-
-      if (fileSpriteName === spriteName && hash !== fileHash) {
-        fs.unlink(join(filePath, file), () => { });
-      }
-    })
-  );
 }
 
 module.exports = generate;
