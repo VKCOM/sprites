@@ -1,4 +1,4 @@
-const SVGSpriter = require("svg-sprite");
+const SVGSpriter = require("@vkontakte/svg-sprite");
 const fs = require("fs");
 const { extname, join, relative, basename, parse } = require("path");
 const { promisify } = require("util");
