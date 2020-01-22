@@ -11,13 +11,15 @@ const InkscapeConverter = require("../src/convert/InkscapeConverter");
   const pngPath = path.resolve("./output/png");
   const svgPath = path.resolve("./output/svg");
   const cssPath = path.resolve("./output/css");
+  const examplePath = path.resolve("./output/example");
 
   await generate(
     input,
     {
       pngPath,
       svgPath,
-      cssPath
+      cssPath,
+      examplePath
     },
     new InkscapeConverter([1, 2], pngPath, "/Applications/Inkscape.app/Contents/MacOS/Inkscape"),
     {
