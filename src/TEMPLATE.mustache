@@ -6,8 +6,8 @@
 .{{common}} {
   background-size: {{spriteWidth}}px {{spriteHeight}}px;
   background-image: url('{{&options.svg.dest}}{{{sprite}}}');
-
   {{#scales}}
+
   .{{options.png.class}}.{{options.png.scalePrefix}}{{.}}x & {
     background-image: url('%png-path-{{.}}%');
   }
