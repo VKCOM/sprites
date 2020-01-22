@@ -6,6 +6,9 @@
   "engines": {
     "node": ">=8.0.0"
   },
+  "scripts": {
+    "test": "jest"
+  },
   "engineStrict": true,
   "dependencies": {
     "@vkontakte/svg-sprite": "^1.6.0-alpha.3",
