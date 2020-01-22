@@ -25,6 +25,7 @@ const lstat = promisify(fs.lstat);
  * @param {string} options.css.stylesheetPrefix Prefix in stylesheet name
  * @param {string} options.css.class Base class for icons
  * @param {Object} options.svg
+ * @param {Object} options.svg.margin Gap between icons
  * @param {string} options.svg.dest Path to SVG where it should be placed on website
  * @param {Object} options.png
  * @param {string} options.png.dest Path to SVG where it should be placed on website
@@ -65,6 +66,9 @@ async function generate(path, output = {}, converter, options) {
     shape: {
       dimension: {
         attributes: true
+      },
+      spacing: {
+        margin: options.svg.margin || 0
       },
       id: {
         generator: function (name, file) {
