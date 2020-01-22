@@ -25,6 +25,7 @@ const InkscapeConverter = require("../src/convert/InkscapeConverter");
         stylesheetPrefix: "sprite-"
       },
       svg: {
+        margin: 8,
         dest: "/images/mobile/icons/svg/"
       },
       png: {
