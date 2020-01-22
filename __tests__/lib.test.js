@@ -44,6 +44,35 @@ async function getTempOutputPaths() {
   };
 }
 
+async function verifyExamples(examplePath) {
+  const browser = await puppeteer.launch();
+  const exampleFiles = await fs.readdir(examplePath);
+
+  const examplesNameMap = exampleFiles
+    .map(name => name.split('-'))
+    .reduce((acc, splittedName) => {
+      acc[splittedName.join('-')] = splittedName.slice(0, -1).join('-')
+
+      return acc;
+    }, {});
+
+
+  await async.forEachOf(exampleFiles, async file => {
+    {
+      const page = await browser.newPage();
+
+      await page.goto('file://' + path.resolve(examplePath, file));
+      const image = await page.screenshot();
+
+      expect(image).toMatchImageSnapshot({
+        customSnapshotIdentifier: examplesNameMap[file],
+      });
+    }
+  });
+
+  await browser.close();
+}
+
 it('works without example', async () => {
   const input = path.resolve(__dirname, "./fixtures/render");
 
@@ -63,7 +92,6 @@ it('works without example', async () => {
 
 describe('renders correctly', () => {
   it('without PNG converter', (async () => {
-    const browser = await puppeteer.launch();
     const input = path.resolve(__dirname, "./fixtures/render");
 
     const { pngPath, svgPath, cssPath, examplePath } = await getTempOutputPaths();
@@ -79,32 +107,7 @@ describe('renders correctly', () => {
       null,
       baseSpriteOptions
     );
-
-    const exampleFiles = await fs.readdir(examplePath);
-
-    const examplesNameMap = exampleFiles
-      .map(name => name.split('-'))
-      .reduce((acc, splittedName) => {
-        acc[splittedName.join('-')] = splittedName.slice(0, -1).join('-')
-
-        return acc;
-      }, {});
-
-
-    await async.forEachOf(exampleFiles, async file => {
-      {
-        const page = await browser.newPage();
-
-        await page.goto('file://' + path.resolve(examplePath, file));
-        const image = await page.screenshot();
-
-        expect(image).toMatchImageSnapshot({
-          customSnapshotIdentifier: examplesNameMap[file],
-        });
-      }
-    });
-
-
-    await browser.close();
+    
+    await verifyExamples(examplePath);
   }));
 });
