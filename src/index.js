@@ -80,7 +80,8 @@ async function generate(path, output = {}, converter, options) {
         attributes: true
       },
       spacing: {
-        margin: options.svg.margin || 0
+        padding: options.svg.margin || 0,
+        content: options.svg.margin && "padding"
       },
       id: {
         generator: function (name, file) {
