@@ -81,7 +81,7 @@ async function generate(path, output = {}, converter, options) {
       },
       spacing: {
         padding: options.svg.margin || 0,
-        content: options.svg.margin && "padding"
+        box: options.svg.margin ? "padding" : null
       },
       id: {
         generator: function (name, file) {

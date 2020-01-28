@@ -11,10 +11,10 @@
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
 
-"@vkontakte/svg-sprite@^1.6.0-alpha.4":
-  version "1.6.0-alpha.4"
-  resolved "https://registry.yarnpkg.com/@vkontakte/svg-sprite/-/svg-sprite-1.6.0-alpha.4.tgz#87be3f63558beaba75ac69ee415f309fcb6fc9d1"
-  integrity sha512-1peCaYMf4LI5lAynzaccWK4lL1umLNwqn9MuWHlo9BA+9ePXJb/B2WFiO98B0SJNYxzldroVRSbws96WZUnvFA==
+"@vkontakte/svg-sprite@^1.6.0-alpha.5":
+  version "1.6.0-alpha.5"
+  resolved "https://registry.yarnpkg.com/@vkontakte/svg-sprite/-/svg-sprite-1.6.0-alpha.5.tgz#700cd564817e0b5c04892104141f3737d439ba48"
+  integrity sha512-q4tL/tEdJiDAeGU7UQtCcz6R7SQwVkBFkjA7bKKBF6aJxrkoAL8uA0LJaTjDb4xKMaeADbin98HD/bHtD1T2Kg==
   dependencies:
     async "^3.1.0"
     css-selector-parser "^1.3.0"
