@@ -1,6 +1,6 @@
 {
   "name": "@vkontakte/sprites",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "main": "src/index.js",
   "license": "MIT",
   "engines": {
@@ -13,6 +13,8 @@
   "dependencies": {
     "@vkontakte/svg-sprite": "^1.6.0-alpha.5",
     "fs-extra": "^7.0.1",
+    "postcss": "^7.0.27",
+    "posthtml": "^0.12.0",
     "semver": "^6.3.0"
   },
   "devDependencies": {

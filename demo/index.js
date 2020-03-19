@@ -34,7 +34,22 @@ const InkscapeConverter = require("../src/convert/InkscapeConverter");
         scalePrefix: "vk_",
         class: "png",
         dest: "/images/mobile/icons/svg"
-      }
+      },
+      themes: {
+        'light': {
+          isDefault: true,
+          variables: {
+            '--red': '#f00',
+            '--green': '#0f0',
+          },
+        },
+        'dark': {
+          variables: {
+            '--red': '#888',
+            '--green': '#ccc',
+          },
+        },
+      },
     }
   );
 

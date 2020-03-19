@@ -107,7 +107,63 @@ describe('renders correctly', () => {
       null,
       baseSpriteOptions
     );
-    
+
     await verifyExamples(examplePath);
+  }));
+
+  it('with defined theme', (async () => {
+    const input = path.resolve(__dirname, "./fixtures/render-with-vars");
+
+    const { pngPath, svgPath, cssPath, examplePath } = await getTempOutputPaths();
+
+    await generate(
+      input,
+      {
+        pngPath,
+        svgPath,
+        cssPath,
+        examplePath
+      },
+      null,
+      {
+        ...baseSpriteOptions,
+        themes: {
+          'light': {
+            isDefault: true,
+            variables: {
+              '--red': '#f00',
+              '--green': '#0f0',
+            },
+          },
+        },
+      }
+    );
+
+    await verifyExamples(examplePath);
+  }));
+});
+
+describe('fails', () => {
+  it('without colors in theme', (async () => {
+    const input = path.resolve(__dirname, "./fixtures/render-no-theme");
+
+    const { pngPath, svgPath, cssPath, examplePath } = await getTempOutputPaths();
+    expect.assertions(1);
+
+    try {
+      await generate(
+        input,
+        {
+          pngPath,
+          svgPath,
+          cssPath,
+          examplePath
+        },
+        null,
+        baseSpriteOptions
+      );
+    } catch(error) {
+      expect(error).toBeInstanceOf(Error);
+    }
   }));
 });

@@ -1,16 +1,25 @@
 const SVGSpriter = require("@vkontakte/svg-sprite");
 const fs = require("fs");
-const { extname, join, relative, basename, parse } = require("path");
+const { extname, join, relative, basename } = require("path");
 const { promisify } = require("util");
 
 const GarbageCollector = require('./GarbageCollector');
 const BaseConverter = require("./convert/BaseConverter");
+const { CustomPropertiesRenderer } = require('./CustomPropertiesRenderer');
 const { mergeDeep, checkDir } = require("./utils");
 
 const readdir = promisify(fs.readdir);
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 const lstat = promisify(fs.lstat);
+
+/**
+ * @typedef Theme
+ * @type {Object}
+ * @property {boolean} [isDefault] This theme will be saved without theme's name prefix. There must be only one `isDefault: true`
+ * @property {Object} [variables] Passed Custom Properties that will be replaced in SVGs with fixed colors. E.g. `{ '--one': '#fff' }`
+ * @property {string[]} [importFrom] Paths to the CSS files with Custom Properties placed in :root block. These Custom Properties will be replaced in SVGs with fixed colors.
+ */
 
 /**
  *
@@ -33,6 +42,7 @@ const lstat = promisify(fs.lstat);
  * @param {string} options.png.class PNG class in top of DOM (e.g in the `<head>` or `<body>`) to detect fallback need
  * @param {string} options.png.scalePrefix Prefix for class with needed scale. E.g `png_2x` or `fallback_1x`
  * @param {Object} options.example
+ * @param {Object.<string, Theme>} [options.themes] Themes
  */
 async function generate(path, output = {}, converter, options) {
   const { pngPath, svgPath, cssPath, examplePath } = output;
@@ -49,10 +59,19 @@ async function generate(path, output = {}, converter, options) {
       dest: "/",
       class: "png",
       scalePrefix: "scale"
-    }
+    },
+    themes: {}
   };
 
   options = mergeDeep(defaultOptions, options);
+
+  if (Object.keys(options.themes).length < 1) {
+    options.themes = {
+      'default': {
+        isDefault: true,
+      }
+    };
+  }
 
   await checkDir(path);
   await checkDir(svgPath);
@@ -149,7 +168,8 @@ async function generate(path, output = {}, converter, options) {
         },
         variables: {
           options,
-          scales: converter ? converter.scales: []
+          scales: converter ? converter.scales: [],
+          themes: Object.keys(options.themes).filter(key => !options.themes[key].isDefault).map(key => ({name: key}))
         }
       };
 
@@ -162,39 +182,59 @@ async function generate(path, output = {}, converter, options) {
         })
       );
 
-      await new Promise(resolve => {
+      await new Promise((resolve, reject) => {
         spriter.compile(async (err, res) => {
-          const css = join(cssPath, res.css.less.basename);
-          const svg = join(svgPath, res.css.sprite.basename);
-          let example = examplePath && join(examplePath, res.css.example.basename);
+          try {
+            const css = join(cssPath, res.css.less.basename);
+            const svg = join(svgPath, res.css.sprite.basename);
+            let example = examplePath && join(examplePath, res.css.example.basename);
 
-          const hash = gc.extractHash(svg);
-          gc.addHash(hash);
+            const hash = gc.extractHash(svg);
+            gc.addHash(hash);
 
-          await writeFile(css, res.css.less.contents.toString());
-          await writeFile(svg, res.css.sprite.contents.toString());
+            await writeFile(css, res.css.less.contents.toString());
 
-          if (example) {
-            example = example
-              .replace('sprite.css.html', basename(svg, '.svg') + '.html');
+            await Promise.all(Object.keys(options.themes).map(async (key) => {
+              const theme = options.themes[key];
 
-            await writeFile(example, res.css.sprite.contents.toString());
+              const cpRenderer = new CustomPropertiesRenderer({
+                variables: theme.variables,
+                importFrom: theme.importFrom || [],
+              });
+
+              const svgContentString = await cpRenderer.process(res.css.sprite.contents.toString());
+              let svgThemePath = svg;
+
+              if (!theme.isDefault) {
+                svgThemePath = join(svgPath, `${key}_${res.css.sprite.basename}`);
+              }
+              await writeFile(svgThemePath, svgContentString);
+            }));
+
+            if (example) {
+              example = example
+                .replace('sprite.css.html', basename(svg, '.svg') + '.html');
+
+              const defaultSVG = await readFile(svg);
+              await writeFile(example, defaultSVG.toString());
+            }
+
+            if (converter) {
+              await convert(
+                converter,
+                gc,
+                {
+                  css,
+                  svg,
+                  name: sprite
+                },
+                options
+              );
+            }
+            resolve();
+          } catch (e) {
+            reject(e);
           }
-
-          if (converter) {
-            await convert(
-              converter,
-              gc,
-              {
-                css,
-                svg,
-                name: sprite
-              },
-              options
-            );
-          }
-
-          resolve();
         });
       });
     })
