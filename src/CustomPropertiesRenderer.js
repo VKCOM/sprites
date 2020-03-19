@@ -18,25 +18,21 @@ class CustomPropertiesRenderer {
 
     this._customProperties = {};
 
-    this.waitForReadiness = (async () => {
-      // Import
-      await Promise.all(this._options.importFrom.map(importPath => {
-        const css = readFileSync(importPath);
+    // Import Custom Properties from paths
+    this._options.importFrom.map(importPath => {
+      const css = readFileSync(importPath);
+      const root = postcss.parse(css);
 
-        return Promise.resolve().then(() => {
-          const root = postcss.parse(css);
-          root.walkDecls((decl) => {
-            this._customProperties[decl.prop] = decl.value;
-          });
-        });
-      }));
+      root.walkDecls((decl) => {
+        this._customProperties[decl.prop] = decl.value;
+      });
+    });
 
-      // `variables` from `options` must override variables from imports
-      this._customProperties = {
-        ...this._customProperties,
-        ...this._options.variables,
-      };
-    })();
+    // `variables` from `options` must override variables from imports
+    this._customProperties = {
+      ...this._customProperties,
+      ...this._options.variables,
+    };
   }
 
   /**
@@ -71,8 +67,6 @@ class CustomPropertiesRenderer {
    * @returns {Promise<string>}
    */
   async process (svg) {
-    await this.waitForReadiness;
-
     return posthtml()
       .use((tree) => {
         tree.walk((node) => {
