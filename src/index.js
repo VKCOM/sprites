@@ -76,7 +76,7 @@ async function generate(path, output = {}, converter, options) {
   await checkDir(path);
   await checkDir(svgPath);
   await checkDir(cssPath);
-  
+
   if (pngPath) {
     await checkDir(pngPath);
   }
@@ -88,7 +88,7 @@ async function generate(path, output = {}, converter, options) {
 
   gc.addPath(pngPath);
   gc.addPath(svgPath);
-  
+
   if (examplePath) {
     gc.addPath(examplePath);
   }
@@ -106,7 +106,43 @@ async function generate(path, output = {}, converter, options) {
         generator: function (name, file) {
           return file.stem;
         }
-      }
+      },
+      transform: [
+        {
+          svgo: {
+            plugins: [
+              {
+                prefixIds: {
+                  prefix: function (node) {
+                    const elementName = node && node.elem
+
+                    let prefix = `${elementName}_`;
+                    if (node.attrs && node.attrs.id) {
+                      prefix += node.attrs.id.value;
+                    }
+
+                    if (prefix) {
+                      return prefix;
+                    }
+
+                    let fallbackPrefix = `___${elementName}`;
+
+
+                    return fallbackPrefix;
+                  }
+                }
+              },
+              { removeTitle: false },
+              { removeDesc: false },
+              { cleanupIDs: false },
+              { convertPathData: false },
+              { removeComments: true },
+              { removeMetadata: true },
+              { cleanupAttrs: true },
+            ]
+          }
+        }
+      ]
     },
     svg: {
       xmlDeclaration: false,
@@ -168,8 +204,8 @@ async function generate(path, output = {}, converter, options) {
         },
         variables: {
           options,
-          scales: converter ? converter.scales: [],
-          themes: Object.keys(options.themes).filter(key => !options.themes[key].isDefault).map(key => ({name: key}))
+          scales: converter ? converter.scales : [],
+          themes: Object.keys(options.themes).filter(key => !options.themes[key].isDefault).map(key => ({ name: key }))
         }
       };
 
