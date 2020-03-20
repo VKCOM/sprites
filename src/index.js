@@ -127,14 +127,13 @@ async function generate(path, output = {}, converter, options) {
 
                     let fallbackPrefix = `___${elementName}`;
 
-
                     return fallbackPrefix;
                   }
                 }
               },
+              { cleanupIDs: true },
               { removeTitle: false },
               { removeDesc: false },
-              { cleanupIDs: false },
               { convertPathData: false },
               { removeComments: true },
               { removeMetadata: true },
