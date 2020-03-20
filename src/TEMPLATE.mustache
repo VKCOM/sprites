@@ -6,6 +6,13 @@
 .{{common}} {
   background-size: {{spriteWidth}}px {{spriteHeight}}px;
   background-image: url('{{&options.svg.dest}}{{{sprite}}}');
+
+  {{#themes}}
+  body[scheme="{{name}}"] & {
+    background-image: url('{{&options.svg.dest}}{{name}}_{{{sprite}}}');
+  }
+  {{/themes}}
+
   {{#scales}}
 
   .{{options.png.class}}.{{options.png.scalePrefix}}{{.}}x & {
