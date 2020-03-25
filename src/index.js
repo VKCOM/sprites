@@ -12,6 +12,7 @@ const readdir = promisify(fs.readdir);
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 const lstat = promisify(fs.lstat);
+const { parse: parseSVG } = require('postsvg');
 
 /**
  * @typedef Theme
@@ -76,7 +77,7 @@ async function generate(path, output = {}, converter, options) {
   await checkDir(path);
   await checkDir(svgPath);
   await checkDir(cssPath);
-  
+
   if (pngPath) {
     await checkDir(pngPath);
   }
@@ -88,7 +89,7 @@ async function generate(path, output = {}, converter, options) {
 
   gc.addPath(pngPath);
   gc.addPath(svgPath);
-  
+
   if (examplePath) {
     gc.addPath(examplePath);
   }
@@ -106,7 +107,29 @@ async function generate(path, output = {}, converter, options) {
         generator: function (name, file) {
           return file.stem;
         }
-      }
+      },
+      transform: [
+        {
+          svgo: {
+            plugins: [
+              {
+                prefixIds: {
+                  prefix: function (node) {
+                    return "___CHANGEME___";
+                  }
+                }
+              },
+              { cleanupIDs: false },
+              { removeTitle: false },
+              { removeDesc: false },
+              { convertPathData: false },
+              { removeComments: true },
+              { removeMetadata: true },
+              { cleanupAttrs: true },
+            ]
+          }
+        }
+      ]
     },
     svg: {
       xmlDeclaration: false,
@@ -168,8 +191,8 @@ async function generate(path, output = {}, converter, options) {
         },
         variables: {
           options,
-          scales: converter ? converter.scales: [],
-          themes: Object.keys(options.themes).filter(key => !options.themes[key].isDefault).map(key => ({name: key}))
+          scales: converter ? converter.scales : [],
+          themes: Object.keys(options.themes).filter(key => !options.themes[key].isDefault).map(key => ({ name: key }))
         }
       };
 
@@ -208,7 +231,89 @@ async function generate(path, output = {}, converter, options) {
               if (!theme.isDefault) {
                 svgThemePath = join(svgPath, `${key}_${res.css.sprite.basename}`);
               }
-              await writeFile(svgThemePath, svgContentString);
+
+              const tree = parseSVG(svgContentString);
+
+              const replacementMap = {};
+              const existIds = new Set();
+
+              const idPrefix = `${key}_${res.css.sprite.basename}`.replace('.svg', '').split('-').slice(0, -1);
+
+              tree.each('svg[id]', node => {
+                function walkContent(content) {
+                  return content.map(child => {
+                    if (child.attrs && typeof child.attrs.id === 'string' && child.attrs.id.includes('___CHANGEME___')) {
+                      let oldId = child.attrs.id;
+
+                      function generateId(string, i = 0) {
+                        if (existIds.has(string)) {
+                          const newString = string + '_' + i;
+
+                          if (existIds.has(newString)) {
+                            return generateId(string, i + 1);
+                          }
+
+                          return newString;
+                        } else {
+                          return string;
+                        }
+                      }
+
+                      child.attrs.id = generateId(`${idPrefix}_${node.attrs.id}___${child.tag}`);
+                      existIds.add(child.attrs.id);
+
+                      replacementMap[oldId] = child.attrs.id;
+                    }
+
+
+                    if (child.content) {
+                      child.content = walkContent(child.content);
+                    }
+
+                    return child;
+                  });
+                }
+
+                node.content = walkContent(node.content);
+
+                return node;
+              });
+
+              tree.each('svg[id]', node => {
+                function walkContent(content) {
+                  return content.map(child => {
+                    child.attrs && Object.keys(child.attrs).forEach(key => {
+                      if (typeof child.attrs[key] === 'string') {
+                        if (child.attrs[key].includes('___CHANGEME___')) {
+                          let variableName;
+                          if (child.attrs[key].startsWith('url')) {
+                            variableName = /(?:#(.*)(?=\)))/.exec(child.attrs[key])[1];
+                          } else if (child.attrs[key].startsWith('#')) {
+                            variableName = child.attrs[key].replace('#', '');
+                          }
+
+                          if (variableName && replacementMap[variableName]) {
+                            child.attrs[key] = child.attrs[key].replace(variableName, replacementMap[variableName]);
+                          }
+                        }
+                      }
+                    });
+
+
+                    if (child.content) {
+                      child.content = walkContent(child.content);
+                    }
+
+                    return child;
+                  });
+                }
+
+                node.content = walkContent(node.content);
+
+                return node;
+              });
+
+              await writeFile(svgThemePath, tree.toString());
             }));
 
             if (example) {
