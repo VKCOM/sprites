@@ -293,7 +293,7 @@ async function generate(path, output = {}, converter, options) {
                           }
 
                           if (variableName && replacementMap[variableName]) {
-                            child.attrs[key] = replacementMap[variableName];
+                            child.attrs[key] = child.attrs[key].replace(variableName, replacementMap[variableName]);
                           }
                         }
                       }
