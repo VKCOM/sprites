@@ -279,7 +279,7 @@ async function generate(path, output = {}, converter, options) {
                 return node;
               });
 
-              tree.each('svg', node => {
+              tree.each('svg[id]', node => {
                 function walkContent(content) {
                   return content.map(child => {
                     child.attrs && Object.keys(child.attrs).forEach(key => {
