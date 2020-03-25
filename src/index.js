@@ -242,7 +242,7 @@ async function generate(path, output = {}, converter, options) {
               tree.each('svg[id]', node => {
                 function walkContent(content) {
                   return content.map(child => {
-                    if (child.attrs && typeof child.attrs.id === 'string' && child.attrs.id.includes('CHANGEME')) {
+                    if (child.attrs && typeof child.attrs.id === 'string' && child.attrs.id.includes('___CHANGEME___')) {
                       let oldId = child.attrs.id;
 
                       function generateId(string, i = 0) {
@@ -284,7 +284,7 @@ async function generate(path, output = {}, converter, options) {
                   return content.map(child => {
                     child.attrs && Object.keys(child.attrs).forEach(key => {
                       if (typeof child.attrs[key] === 'string') {
-                        if (child.attrs[key].includes('CHANGEME')) {
+                        if (child.attrs[key].includes('___CHANGEME___')) {
                           let variableName;
                           if (child.attrs[key].startsWith('url')) {
                             variableName = /(?:#(.*)(?=\)))/.exec(child.attrs[key])[1];
