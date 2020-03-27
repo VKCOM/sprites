@@ -196,6 +196,8 @@ async function generate(path, output = {}, converter, options) {
         }
       };
 
+      process.env.QT_QPA_PLATFORM = 'offscreen'; // Param to avoid phantomjs redownload on CI
+
       const spriter = new SVGSpriter(config);
 
       await Promise.all(
