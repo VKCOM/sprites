@@ -182,7 +182,7 @@ async function generate(path, output = {}, converter, options) {
             render: {
               css: {
                 dest:
-                  join(cssPath, `${options.css.stylesheetPrefix}${sprite}`) +
+                  join(`${options.css.stylesheetPrefix}${sprite}`) +
                   ".css",
                 template: join(__dirname, "TEMPLATE.mustache")
               }
