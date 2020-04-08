@@ -180,10 +180,10 @@ async function generate(path, output = {}, converter, options) {
             prefix: `.${options.css.class}-${sprite}__%s`,
             common: `${options.css.class}-${sprite}`,
             render: {
-              less: {
+              css: {
                 dest:
                   join(cssPath, `${options.css.stylesheetPrefix}${sprite}`) +
-                  ".less",
+                  ".css",
                 template: join(__dirname, "TEMPLATE.mustache")
               }
             }
@@ -208,14 +208,14 @@ async function generate(path, output = {}, converter, options) {
       await new Promise((resolve, reject) => {
         spriter.compile(async (err, res) => {
           try {
-            const css = join(cssPath, res.css.less.basename);
+            const css = join(cssPath, res.css.css.basename);
             const svg = join(svgPath, res.css.sprite.basename);
             let example = examplePath && join(examplePath, res.css.example.basename);
 
             const hash = gc.extractHash(svg);
             gc.addHash(hash);
 
-            await writeFile(css, res.css.less.contents.toString());
+            await writeFile(css, res.css.css.contents.toString());
 
             await Promise.all(Object.keys(options.themes).map(async (key) => {
               const theme = options.themes[key];
