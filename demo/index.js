@@ -8,9 +8,9 @@ const InkscapeConverter = require("../src/convert/InkscapeConverter");
 
   const input = path.resolve("./input");
 
-  const pngPath = path.resolve("./output/png");
-  const svgPath = path.resolve("./output/svg");
-  const cssPath = path.resolve("./output/css");
+  const pngPath = 'output/png/';
+  const svgPath = 'output/svg/';
+  const cssPath = 'output/css/';
   const examplePath = path.resolve("./output/example");
 
   await generate(
