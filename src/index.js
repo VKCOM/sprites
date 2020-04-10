@@ -201,7 +201,7 @@ async function generate(path, output = {}, converter, options) {
             plugins: [{
               prefixIds: {
                 prefix: function (node) {
-                  return sprite;
+                  return basename(image).replace('.svg', '');
                 }
               }
             }]
