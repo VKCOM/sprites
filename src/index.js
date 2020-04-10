@@ -1,4 +1,5 @@
 const SVGSpriter = require("@vkontakte/svg-sprite");
+const SVGO = require("svgo");
 const fs = require("fs");
 const { extname, join, relative, basename } = require("path");
 const { promisify } = require("util");
@@ -112,13 +113,7 @@ async function generate(path, output = {}, converter, options) {
         {
           svgo: {
             plugins: [
-              {
-                prefixIds: {
-                  prefix: function (node) {
-                    return "___CHANGEME___";
-                  }
-                }
-              },
+              { prefixIds: false },
               { cleanupIDs: false },
               { removeTitle: false },
               { removeDesc: false },
@@ -134,7 +129,7 @@ async function generate(path, output = {}, converter, options) {
     svg: {
       xmlDeclaration: false,
       doctypeDeclaration: false,
-      namespaceIDs: true,
+      namespaceIDs: false,
       dimensionAttributes: false
     },
     variables: {
@@ -201,7 +196,20 @@ async function generate(path, output = {}, converter, options) {
       await Promise.all(
         sprites[sprite].map(async image => {
           const file = await readFile(image);
-          spriter.add(image, null, file);
+
+          const svgo = new SVGO({
+            plugins: [{
+              prefixIds: {
+                prefix: function (node) {
+                  return sprite;
+                }
+              }
+            }]
+          });
+
+          const result = await svgo.optimize(file);
+
+          spriter.add(image, null, result.data.toString());
         })
       );
 
@@ -232,88 +240,7 @@ async function generate(path, output = {}, converter, options) {
                 svgThemePath = join(svgPath, `${key}_${res.css.sprite.basename}`);
               }
 
-              const tree = parseSVG(svgContentString);
-
-              const replacementMap = {};
-              const existIds = new Set();
-
-              const idPrefix = `${key}_${res.css.sprite.basename}`.replace('.svg', '').split('-').slice(0, -1);
-
-              tree.each('svg[id]', node => {
-                function walkContent(content) {
-                  return content.map(child => {
-                    if (child.attrs && typeof child.attrs.id === 'string' && child.attrs.id.includes('___CHANGEME___')) {
-                      let oldId = child.attrs.id;
-
-                      function generateId(string, i = 0) {
-                        if (existIds.has(string)) {
-                          const newString = string + '_' + i;
-
-                          if (existIds.has(newString)) {
-                            return generateId(string, i + 1);
-                          }
-
-                          return newString;
-                        } else {
-                          return string;
-                        }
-                      }
-
-                      child.attrs.id = generateId(`${idPrefix}_${node.attrs.id}___${child.tag}`);
-                      existIds.add(child.attrs.id);
-
-                      replacementMap[oldId] = child.attrs.id;
-                    }
-
-
-                    if (child.content) {
-                      child.content = walkContent(child.content);
-                    }
-
-                    return child;
-                  });
-                }
-
-                node.content = walkContent(node.content);
-
-                return node;
-              });
-
-              tree.each('svg[id]', node => {
-                function walkContent(content) {
-                  return content.map(child => {
-                    child.attrs && Object.keys(child.attrs).forEach(key => {
-                      if (typeof child.attrs[key] === 'string') {
-                        if (child.attrs[key].includes('___CHANGEME___')) {
-                          let variableName;
-                          if (child.attrs[key].startsWith('url')) {
-                            variableName = /(?:#(.*)(?=\)))/.exec(child.attrs[key])[1];
-                          } else if (child.attrs[key].startsWith('#')) {
-                            variableName = child.attrs[key].replace('#', '');
-                          }
-
-                          if (variableName && replacementMap[variableName]) {
-                            child.attrs[key] = child.attrs[key].replace(variableName, replacementMap[variableName]);
-                          }
-                        }
-                      }
-                    });
-
-
-                    if (child.content) {
-                      child.content = walkContent(child.content);
-                    }
-
-                    return child;
-                  });
-                }
-
-                node.content = walkContent(node.content);
-
-                return node;
-              });
-
-              await writeFile(svgThemePath, tree.toString());
+              await writeFile(svgThemePath, svgContentString.toString());
             }));
 
             if (example) {
