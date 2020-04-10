@@ -13,7 +13,6 @@ const readdir = promisify(fs.readdir);
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 const lstat = promisify(fs.lstat);
-const { parse: parseSVG } = require('postsvg');
 
 /**
  * @typedef Theme
